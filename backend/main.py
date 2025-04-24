@@ -2,10 +2,25 @@ from fastapi import FastAPI
 from db import connect_to_mongo, close_mongo_connection
 from routers.auth import router as auth_router
 from routers.events import router as events_router
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="My Event App",
     version="0.1.0",
+)
+
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+# Añade el middleware de CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,          # quién puede llamar
+    allow_credentials=True,         # si se permiten cookies/credenciales
+    allow_methods=["*"],            # qué métodos HTTP se permiten
+    allow_headers=["*"],            # qué cabeceras se permiten
 )
 
 def startup_db_client():
