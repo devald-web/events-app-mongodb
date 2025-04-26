@@ -3,13 +3,18 @@ from typing import Optional
 
 
 class User(BaseModel):
-    id: Optional[str] = Field(default=None, alias="_id")
+    id: str | None = None
     username: str
     email: str
-    hashed_password: str
-    rol: str
+    password: str
+    role: str
 
     class Config:
-      validate_assignment = True
-      populate_by_name = True
+      json_schema_extra = {
+        "example": {
+          "username": "johndoe",
+          "email": "johndoe@example.com",
+          "role": "usuario"
+        }
+      }
       

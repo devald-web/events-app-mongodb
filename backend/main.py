@@ -21,6 +21,7 @@ app.add_middleware(
     allow_credentials=True,         # si se permiten cookies/credenciales
     allow_methods=["*"],            # qué métodos HTTP se permiten
     allow_headers=["*"],            # qué cabeceras se permiten
+    expose_headers=["*"]
 )
 
 def startup_db_client():

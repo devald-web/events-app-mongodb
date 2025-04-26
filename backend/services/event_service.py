@@ -30,3 +30,16 @@ def list_events() -> List[Event]:
         del doc["_id"]                                 
         events.append(Event(**doc))                    
     return events
+
+def update_event(event_id, event_data: dict) -> Event:
+    updated = db.db["events"].update_one(
+        {"_id": ObjectId(event_id)},
+        {"$set": event_data}
+    )
+    if updated.modified_count == 0:
+        raise ValueError("Evento no encontrado o sin cambios")
+    return get_event(event_id)
+
+def delete_event(event_id: str) -> bool:
+    deleted = db.db["events"].delete_one({"_id": ObjectId(event_id)})
+    return deleted.deleted_count > 0
