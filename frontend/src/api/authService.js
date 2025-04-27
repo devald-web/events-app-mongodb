@@ -57,6 +57,8 @@ async function login(credentials) {
     // Tras login exitoso, almacenar info del usuario en el localStorage
     const userData = await response.json();
     localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('username', credentials.username);
+    localStorage.setItem('password', credentials.password);
     return userData;
   } catch (error) {
     console.error("login error:", error);
@@ -65,9 +67,24 @@ async function login(credentials) {
   }
 };
 
+export const updateProfile = async (data) => {
+  const user = JSON.parse(localStorage.getItem('user'));
+
+  const response = await fetch(`${API_URL}/profile`, {
+      method: 'PUT',
+      headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Basic ' + btoa(`${localStorage.getItem('username') || user.username}:${localStorage.getItem('password')}`)
+      },
+      body: JSON.stringify(data)
+  });
+  if (!response.ok) throw new Error("Not authenticated");
+  return response.json();
+};
+
 const logout = () => {
   localStorage.removeItem('user');
 };
 
 // Exporta las funciones individualmente
-export default { register, login, logout };
+export default { register, login, logout, updateProfile };

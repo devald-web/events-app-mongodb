@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import eventService from '../api/eventService'
 
 // Convierte 'YYYY-MM-DDTHH:MM' a ISO 8601 para la API
-function formatToISO(dateLocal) {
+export function formatToISO(dateLocal) {
   return new Date(dateLocal).toISOString()
 }
 

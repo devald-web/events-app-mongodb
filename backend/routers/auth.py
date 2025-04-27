@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, status, Body
 from models.user import User # Importa User model
 from services import user_service #Importa user service
 from pydantic import BaseModel
+from services.security import get_current_user 
 
 router = APIRouter()
 
@@ -74,3 +75,14 @@ def login_user(login_data: UserLogin):
     }
     
     return UserResponse(**user.model_dump())
+
+@router.put("/profile", response_model=UserResponse)
+async def update_profile(
+    profile_data: dict = Body(...),
+    current_user: User = Depends(get_current_user)
+):
+    try:
+        updated_user = user_service.update_profile(current_user.id, profile_data)
+        return updated_user
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

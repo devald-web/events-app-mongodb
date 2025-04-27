@@ -5,6 +5,7 @@ import CreateEvent from './pages/CreateEvent' // Página para crear eventos
 import Login from './components/login' // Importar componente Login
 import Register from './components/register' // Importar componente Register
 import authService from './api/authService'
+import { UserDropdown } from './components/UserDropdown'
 
 // Función de ayuda para obtener el usuario del localStorage
 const getCurrentUser = () => {
@@ -106,13 +107,9 @@ className="p-2 mr-4 rounded-full bg-gray-200 dark:bg-gray-700"
           </button> */}
           {isAuthenticated ? (
             <>
-              <span className="mr-4 text-gray-700 text-xl">Bienvenido, {currentUser?.username}!</span>
-              <button
-                onClick={handleLogout}
-                className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm focus:outline-none focus:shadow-outline"
-              >
-                Salir
-              </button>
+              <div className="flex items-center space-x-4">
+                <UserDropdown user={currentUser} />
+              </div>
             </>
           ) : (
             <>
