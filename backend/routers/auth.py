@@ -82,7 +82,46 @@ async def update_profile(
     current_user: User = Depends(get_current_user)
 ):
     try:
-        updated_user = user_service.update_profile(current_user.id, profile_data)
-        return updated_user
+        # 1. Verificar que la contraseña actual es correcta (es necesario)
+        current_password = profile_data.get("currentPassword")
+        if not current_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail = "Se requiere la contraseña actual"
+            )
+            
+        if current_password != current_user.password: # Comparación en texto plano
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail = "La contraseña actual es incorrecta"
+            )
+        
+        #2. Preparar los datos para la actualización
+        update_data = {}
+            
+        if "username" in profile_data:
+            update_data["username"] = profile_data["username"]
+        if "email" in profile_data:
+            update_data["email"] = profile_data["email"]
+        
+        # Si hay nueva contraseña, usarla directamente
+        if "newPassword" in profile_data and profile_data["newPassword"]:
+            update_data["password"] = profile_data["newPassword"] # En texto plano
+            
+        # 3. Actualizar el usuario
+        if update_data:
+            updated_user = user_service.update_profile(current_user.id, update_data)
+            if not updated_user:
+                raise HTTPException(
+                    status_code=status.HHTP_500_INTERNAL_SERVER_ERROR,
+                    detail = "Error al actualizar el perfil"
+                )
+            return updated_user
+        else:
+            # Si no hay cambios, devolver el usuario actual
+            return current_user
+        
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

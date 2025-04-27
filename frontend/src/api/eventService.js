@@ -76,7 +76,7 @@ async function update(eventId, eventData) {
     try {
     const errorData = JSON.parse(text);
     throw new Error(errorData.detail || JSON.stringify(errorData));
-  } catch (e) {
+  } catch {
     throw new Error(text || 'Error al actualizar el evento');
   }
 }
@@ -107,7 +107,7 @@ async function remove(eventId) {
     try {
       const errorData = JSON.parse(text);
       throw new Error(errorData.detail || JSON.stringify(errorData));
-  } catch (e) {
+  } catch {
     throw new Error(text || 'Error al eliminar el evento');
   }
 }

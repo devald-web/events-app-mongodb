@@ -1,5 +1,8 @@
 import React, { useState } from 'react'
 import eventService from '../api/eventService'
+import imageService from '../api/imageService'
+import CategorySelector from '../components/CategorySelector'
+import ImageUrlInput from '../components/ImageUrlInput'
 
 // Convierte 'YYYY-MM-DDTHH:MM' a ISO 8601 para la API
 export function formatToISO(dateLocal) {
@@ -12,35 +15,75 @@ export default function CreateEvent() {
     description: '',
     start_time: '',
     end_time: '',
-    location: ''
+    location: '',
+    category_id: '', // Nueva propiedad
+    image_url: '' // Nueva propiedad
   })
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleChange = e => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
   }
 
+  const handleCategoryChange = (categoryId) => {
+    setForm(prev => ({ ...prev, category_id: categoryId }))
+  }
+
+  const handleImageChange = (url) => {
+    setForm(prev => ({ ...prev, image_url: url }))
+  }
+
   const handleSubmit = async e => {
     e.preventDefault()
     setError(null)
     setSuccess(null)
+    setIsSubmitting(true)
+    
     try {
+      // Crear evento
       const eventData = {
         name: form.name,
         description: form.description,
         start_time: formatToISO(form.start_time),
         end_time: formatToISO(form.end_time),
-        location: form.location
+        location: form.location,
+        category_id: form.category_id || null
       }
-      // Añadimos _id null directamente en la llamada
-      await eventService.create(eventData)
+      
+      const createdEvent = await eventService.create(eventData)
+      
+      // Si hay imagen, asociarla al evento
+      if (form.image_url) {
+        try {
+          await imageService.upload(
+            createdEvent.id || createdEvent._id,
+            form.image_url,
+            true // Es la imagen principal
+          )
+        } catch (imgError) {
+          console.error('Error al subir imagen:', imgError)
+          // Continuar aunque falle la imagen
+        }
+      }
+      
       setSuccess('Evento creado correctamente')
-      setForm({ name: '', description: '', start_time: '', end_time: '', location: '' })
+      setForm({ 
+        name: '', 
+        description: '', 
+        start_time: '', 
+        end_time: '', 
+        location: '',
+        category_id: '',
+        image_url: ''
+      })
     } catch (err) {
       console.error('Error creating event:', err)
-      setError(err.message)
+      setError(err.message || 'Error al crear evento')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -61,6 +104,15 @@ export default function CreateEvent() {
             required
           />
         </div>
+        
+        <div>
+          <label className="block text-sm font-medium">Categoría</label>
+          <CategorySelector
+            selectedCategories={form.category_id ? [form.category_id] : []}
+            onChange={handleCategoryChange}
+          />
+        </div>
+        
         <div>
           <label className="block text-sm font-medium">Descripción</label>
           <textarea
@@ -70,6 +122,7 @@ export default function CreateEvent() {
             className="mt-1 block w-full border rounded p-2"
           />
         </div>
+        
         <div>
           <label className="block text-sm font-medium">Inicio</label>
           <input
@@ -81,6 +134,7 @@ export default function CreateEvent() {
             required
           />
         </div>
+        
         <div>
           <label className="block text-sm font-medium">Fin</label>
           <input
@@ -92,6 +146,7 @@ export default function CreateEvent() {
             required
           />
         </div>
+        
         <div>
           <label className="block text-sm font-medium">Ubicación</label>
           <input
@@ -102,11 +157,23 @@ export default function CreateEvent() {
             className="mt-1 block w-full border rounded p-2"
           />
         </div>
+        
+        <div>
+          <label className="block text-sm font-medium">Imagen del evento (URL)</label>
+          <ImageUrlInput
+            value={form.image_url}
+            onChange={handleImageChange}
+          />
+        </div>
+        
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+          disabled={isSubmitting}
+          className={`w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 ${
+            isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
         >
-          Crear Evento
+          {isSubmitting ? 'Creando...' : 'Crear Evento'}
         </button>
       </form>
     </div>

@@ -9,11 +9,46 @@ export const UserDropdown = ({ user }) => {
 
   const handleNameUpdate = async () => {
     try {
-      await authService.updateProfile({ username: newName });
+      if (!newName.trim()) {
+        alert("El nombre de usuario no puede estar vacío");
+        return;
+      }
+
+      // Obtener la contraseña del localStorage
+      const password = localStorage.getItem('password');
+      if (!password) {
+        alert("No se pudo obtener la información de autenticación. Por favor inicie sesión nuevamente.");
+        handleLogout();
+        return;
+      }
+
+      await authService.updateProfile({
+        username: newName,
+        currentPassword: password // Necesitamos la contraseña actual para autorizar el cambio
+      });
+
+      // Actualizar localStorage directamente
+      localStorage.setItem('username', newName);
+
+      // Actualizar el objeto user en localStorage
+      const userObject = JSON.parse(localStorage.getItem('user'));
+      if (userObject) {
+        localStorage.setItem('user', JSON.stringify({
+          ...userObject,
+          username: newName
+        }));
+      }
+
       setIsEditingName(false);
-      window.location.reload();
+
+      // Actualizar la UI sin necesidad de recargar la página
+      user.username = newName;
+
+      // O alternativamente, recargar si es necesario
+      // window.location.reload();
     } catch (error) {
       console.error("Error updating name:", error);
+      alert("Error al actualizar nombre: " + (error.message || "Error desconocido"));
     }
   };
 

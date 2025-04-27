@@ -1,5 +1,3 @@
-// src/api/authService.js
-
 // URL del backend FastAPI para auth
 const API_URL = 'http://127.0.0.1:8000/auth'
 
@@ -8,13 +6,13 @@ const API_URL = 'http://127.0.0.1:8000/auth'
  * @param {object} userData - Datos del usuario { username, email, password, role?}
  * @returns {promise<object>} - Los datos del usuario registrado (excluyendo contraseña)
 */
-async function register(userData){
+async function register(userData) {
   try {
     const response = await fetch(`${API_URL}/register`, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json' 
+        'Accept': 'application/json'
       },
       body: JSON.stringify(userData)
     });
@@ -48,7 +46,7 @@ async function login(credentials) {
     });
 
     // const responseData = await response.json(); // Intenta parsear JSON siempre
-  
+
     if (!response.ok) {
       // Lanza un error con el detalle del backend si está disponible
       const errorData = await response.json().catch(() => ({}));
@@ -67,20 +65,60 @@ async function login(credentials) {
   }
 };
 
-export const updateProfile = async (data) => {
-  const user = JSON.parse(localStorage.getItem('user'));
+async function updateProfile(data) {
+  try {
+    // 1. Asegurar que tenemos la contraseña actual
+    if (!data.currentPassword) {
+      throw new Error("Se requiere la contraseña actual para realizar cambios");
+    }
 
-  const response = await fetch(`${API_URL}/profile`, {
+    //2. Obtener las credenciales actuales
+    const currentUsername = localStorage.getItem('username');
+    const currentPassword = localStorage.getItem('password');
+  
+    //3. Realizar la solicitud con autenticación básica
+    const response = await fetch(`${API_URL}/profile`, {
       method: 'PUT',
-      headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Basic ' + btoa(`${localStorage.getItem('username') || user.username}:${localStorage.getItem('password')}`)
+      header: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Basic ' + btoa(`${currentUsername}:${currentPassword}`)
       },
       body: JSON.stringify(data)
-  });
-  if (!response.ok) throw new Error("Not authenticated");
-  return response.json();
-};
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `Error ${response.status}`);
+    }
+
+    // 4. Procesar la respuesta
+    const updatedUser = await response.json();
+
+    // 5. Actualizar localStorage
+    const user = JSON.parse(localStorage.getItem('user'));
+
+    // Actualizar el objeto usuario
+    localStorage.setItem('user', JSON.stringify({
+      ...user,
+      ...updatedUser
+    }));
+
+    // Si cambió el nombre de usuario, actualizar también el username almacenado
+    if (data.username && data.username !== currentUsername) {
+      localStorage.setItem('username', data.username);
+    }
+
+    // Si cambió la contraseña, actualizar también la contraseña almacenada
+    if (data.newPassword) {
+      localStorage.setItem('password', data.newPassword);
+    }
+
+    return updatedUser;
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    throw error;
+  }
+}
 
 const logout = () => {
   localStorage.removeItem('user');
