@@ -14,6 +14,10 @@ function Settings() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  // Nuevos estados para el modal
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [requiresLogout, setRequiresLogout] = useState(false);
 
   useEffect(() => {
     // Cargar datos actuales del usuario
@@ -83,13 +87,10 @@ function Settings() {
 
       // Mostrar mensaje de éxito y posiblemente cerrar sesión
       if (usernameChanged || passwordChanged) {
-        setSuccess("Perfil actualizado correctamente. Los cambios en las credenciales requieren nuevo inicio de sesión");
-
-        // Dar tiempo para leer el mensaje y luego cerrar sesión
-        setTimeout(() => {
-          authService.logout();
-          window.location.href = '/';
-        }, 3000);
+        // En lugar de setTimeout, mostrar el modal
+        setModalMessage("Tu perfil ha sido actualizado correctamente. Los cambios en las credenciales requieren un nuevo inicio de sesión.");
+        setRequiresLogout(true);
+        setShowModal(true);
       } else {
         setSuccess("Perfil actualizado correctamente.");
       }
@@ -100,9 +101,42 @@ function Settings() {
     }
   };
 
+  // Función para cerrar sesión
+  const handleLogout = () => {
+    authService.logout();
+    window.location.href = '/';
+  };
+
   return (
     <div className="max-w-4xl mx-auto mt-8 p-4">
       <h1 className="text-2xl font-bold mb-6 text-center">Configuración</h1>
+
+      {/* Modal de confirmación */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4">Actualización exitosa</h3>
+            <p className="mb-6">{modalMessage}</p>
+            <div className="flex justify-end space-x-4">
+              {requiresLogout ? (
+                <button
+                  onClick={handleLogout}
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                >
+                  Cerrar sesión
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                >
+                  Aceptar
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mb-6 flex border-b">
         <button

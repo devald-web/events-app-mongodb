@@ -79,7 +79,7 @@ async function updateProfile(data) {
     //3. Realizar la solicitud con autenticación básica
     const response = await fetch(`${API_URL}/profile`, {
       method: 'PUT',
-      header: {
+      headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Basic ' + btoa(`${currentUsername}:${currentPassword}`)
       },

@@ -18,6 +18,7 @@ const UserPreferences = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [initialized, setInitialized] = useState(false);
 
   // Opciones de lenguaje y zona horaria
   const languages = [
@@ -48,13 +49,19 @@ const UserPreferences = () => {
             language: data.language || settings.language,
             timezone: data.timezone || settings.timezone
           });
+          setInitialized(true); // Marca como inicializado
         }
       } catch (err) {
         console.error('Error cargando configuración:', err);
-        setError('No se pudo cargar la configuración de usuario');
-        
-        // Intentar inicializar si hay error (podría ser que no existan aún)
+          
+        if (err.message?.includes('No se pudo obtener el ID del usuario')) {
+          setError('No se pudo cargar la configuración de usuario');
+         return; 
+        }
+
+        // Intentar inicializar
         try {
+          console.log('Intentando inicializar configuración...');
           await userSettingsService.initialize();
           const data = await userSettingsService.get();
           if (data) {
@@ -65,9 +72,11 @@ const UserPreferences = () => {
               language: data.language || settings.language,
               timezone: data.timezone || settings.timezone
             });
+            setInitialized(true);
           }
         } catch (initErr) {
           console.error('Error inicializando configuración:', initErr);
+          setError('No se pudo inicializar la configuración. Por favor, intenta más tarde.');
         }
       } finally {
         setLoading(false);
@@ -125,7 +134,7 @@ const UserPreferences = () => {
     }
   };
 
-  if (loading) {
+  if (loading || !initialized) {
     return <div className="text-center p-4">Cargando preferencias...</div>;
   }
 

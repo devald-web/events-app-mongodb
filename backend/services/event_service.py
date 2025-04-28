@@ -32,9 +32,13 @@ def list_events() -> List[Event]:
         events.append(Event(**doc))                    
     return events
 
-def update_event(event_id: str, event_data: Event) -> Event:
-    #Convertir a dict y eliminar campos nulos
-    update_data = {k: v for k, v in event_data.dict(exclude={"id"}).items() if v is not None}
+def update_event(event_id: str, event_data):
+    # Verificar si event_data es un dict o un modelo Pydantic
+    if hasattr(event_data, 'dict'):
+        update_data = {k: v for k, v in event_data.dict(exclude={"id"}).items() if v is not None}
+    else:
+        # Ya es un diccionario
+        update_data = {k: v for k, v in event_data.items() if v is not None}
     
     result = db.db["events"].update_one(
         {"_id": ObjectId(event_id)},

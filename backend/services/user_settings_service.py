@@ -3,12 +3,23 @@ from typing import Optional
 import db  
 
 def get_user_settings(user_id: str) -> Optional[dict]:
-  """Obtiene la configuración de un usuario"""
-  settings = db.db["user_settings"].find_one({"user_id": ObjectId(user_id)})
-  if settings:
-    settings["_id"] = str(settings["_id"])
-    settings["user_id"] = str(settings["user_id"])
-  return settings
+  """Obtiene las configuraciones para un usuario específico"""
+  try:
+    settings = db.db["user_settings"].find_one({"user_id": user_id})
+    if settings:
+      # Convertir ObjectIds a strings
+      settings["_id"] = str(settings["_id"])
+      if "user_id" in settings and isinstance(settings["user_id", ObjectId]):
+        settings["user_id"] = str(settings["user_id"])
+        
+      # Si hay preferred_categories, convertirlas también
+      if "preferrend_categories" in settings and settings["preferred_categories"]:
+        settings["preferred_categories"] = [str(cat_id) for cat_id in settings["preferred_categories"]]
+        
+    return settings
+  except Exception as e:
+    print(f"Error obteniendo configuración de usuario: {str(e)}")
+    return None
 
 def update_user_settings(user_id: str, settings: dict) -> bool:
   """Actualiza o crea la configuración de un usuario"""

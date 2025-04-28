@@ -51,7 +51,8 @@ async function get() {
   const userId = getCurrentUserId();
   
   const response = await fetch(`${API_URL}/${userId}`, {
-    headers: getAuthHeaders()
+    headers: getAuthHeaders(),
+    credentials: 'include'
   });
   
   if (!response.ok) {
@@ -72,6 +73,7 @@ async function update(settings) {
   const response = await fetch(`${API_URL}/${userId}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
+    credentials: 'include',
     body: JSON.stringify(settings)
   });
 
@@ -96,7 +98,8 @@ async function initialize() {
   
   const response = await fetch(`${API_URL}/${userId}/initialize`, {
     method: 'POST',
-    headers: getAuthHeaders()
+    headers: getAuthHeaders(),
+    credentials: 'include'
   });
 
   const text = await response.text();
@@ -122,6 +125,7 @@ async function updateCategories(categories) {
   const response = await fetch(`${API_URL}/${userId}/categories`, {
     method: 'PUT',
     headers: getAuthHeaders(),
+    credentials: 'include',
     body: JSON.stringify(categories)
   });
 

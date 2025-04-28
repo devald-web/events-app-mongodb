@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends
-from typing import List, Optional
+from fastapi import APIRouter, HTTPException, Depends, status
+from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 from services import user_settings_service
 from bson.errors import InvalidId
+from models.user import User
+from services.security import get_current_user
 
 router = APIRouter()
 
@@ -18,18 +20,40 @@ class UserSettingsUpdate(BaseModel):
     language: Optional[str] = None
     timezone: Optional[str] = None
 
-@router.get("/{user_id}", response_model=dict)
-async def get_settings(user_id: str):
+@router.get("/{user_id}", response_model=Dict[str, Any])
+async def get_settings(user_id: str, current_user: User = Depends(get_current_user)):
     """Obtiene la configuración de un usuario"""
     try:
+        # Verificación básica de seguridad
+        if current_user.id != user_id:
+            raise HTTPException(status_code=403, detail="No tienes permiso para acceder a estas configuraciones")
+        
         settings = user_settings_service.get_user_settings(user_id)
         if not settings:
             # Si el usuario no tiene configuraciones, inicializamos las predeterminadas
             user_settings_service.initialize_user_settings(user_id)
             settings = user_settings_service.get_user_settings(user_id)
+            
+            if not settings:
+                return {
+                    "notification_preferences": {
+                        "email": True,
+                        "push": True,
+                        "sms": False
+                    },
+                    "theme": "light",
+                    "preferred_categories": [],
+                    "language": "es",
+                    "timezone": "UTC"
+                }
+            
         return settings
     except InvalidId:
         raise HTTPException(status_code=400, detail="ID de usuario inválido")
+    except Exception as e:
+        # Loggear el error para diagnóstico
+        print(f"Error al obtener configuración: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/{user_id}", response_model=dict)
 async def update_settings(user_id: str, settings: UserSettingsUpdate):

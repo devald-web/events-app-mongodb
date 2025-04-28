@@ -113,7 +113,7 @@ async def update_profile(
             updated_user = user_service.update_profile(current_user.id, update_data)
             if not updated_user:
                 raise HTTPException(
-                    status_code=status.HHTP_500_INTERNAL_SERVER_ERROR,
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail = "Error al actualizar el perfil"
                 )
             return updated_user
